@@ -3,19 +3,25 @@
 import { useEffect, useState } from "react";
 import { Edit, Trash2, Check, X } from "lucide-react";
 
+export interface Task {
+  id: number;
+  text: string;
+  done: boolean;
+}
+
 export default function Home() {
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState("");
-  const [editingId, setEditingId] = useState(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const savedTasks = localStorage.getItem("tasks");
-    if (savedTasks) setTasks(JSON.parse(savedTasks));
+    if (savedTasks) setTasks(JSON.parse(savedTasks) as Task[]);
   }, []);
 
-  const saveTasks = (updatedTasks) => {
+  const saveTasks = (updatedTasks: Task[]) => {
     setTasks(updatedTasks);
     localStorage.setItem("tasks", JSON.stringify(updatedTasks));
   };
@@ -23,17 +29,17 @@ export default function Home() {
   const handleAdd = () => {
     if (!newTask.trim()) return setErrorMessage("Task text is required");
 
-    const newItem = { id: Date.now(), text: newTask, done: false };
+    const newItem: Task = { id: Date.now(), text: newTask, done: false };
     saveTasks([...tasks, newItem]);
     setNewTask("");
     setErrorMessage("");
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = (id: number) => {
     saveTasks(tasks.filter((t) => t.id !== id));
   };
 
-  const handleUpdate = (id) => {
+  const handleUpdate = (id: number) => {
     if (!editingText.trim()) return setErrorMessage("Task text is required");
 
     const updatedTasks = tasks.map((t) => (t.id === id ? { ...t, text: editingText } : t));
@@ -43,7 +49,7 @@ export default function Home() {
     setErrorMessage("");
   };
 
-  const handleToggleComplete = (id) => {
+  const handleToggleComplete = (id: number) => {
     const updatedTasks = tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
     saveTasks(updatedTasks);
   };
