@@ -10,13 +10,11 @@ export default function Home() {
   const [editingText, setEditingText] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Carregar tasks do localStorage
   useEffect(() => {
     const savedTasks = localStorage.getItem("tasks");
     if (savedTasks) setTasks(JSON.parse(savedTasks));
   }, []);
 
-  // Salvar tasks no localStorage
   const saveTasks = (updatedTasks) => {
     setTasks(updatedTasks);
     localStorage.setItem("tasks", JSON.stringify(updatedTasks));
