@@ -1,77 +1,53 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Task, ApiResponse } from "./types";
-import axios from "axios";
-
-// Lucide Icons
 import { Edit, Trash2, Check, X } from "lucide-react";
 
 export default function Home() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [newTask, setNewTask] = useState<string>("");
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editingText, setEditingText] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [tasks, setTasks] = useState([]);
+  const [newTask, setNewTask] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editingText, setEditingText] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const API = "http://localhost:5000/api";
-
-  const fetchTasks = async () => {
-    try {
-      const res = await axios.get<ApiResponse<Task[]>>(API);
-      if (res.data.status === "success" && res.data.data) {
-        setTasks(res.data.data);
-      }
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to fetch tasks");
-    }
-  };
-
+  // Carregar tasks do localStorage
   useEffect(() => {
-    fetchTasks();
+    const savedTasks = localStorage.getItem("tasks");
+    if (savedTasks) setTasks(JSON.parse(savedTasks));
   }, []);
 
-  const handleAdd = async () => {
+  // Salvar tasks no localStorage
+  const saveTasks = (updatedTasks) => {
+    setTasks(updatedTasks);
+    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+  };
+
+  const handleAdd = () => {
     if (!newTask.trim()) return setErrorMessage("Task text is required");
 
-    try {
-      await axios.post(API, { text: newTask });
-      setNewTask("");
-      await fetchTasks();
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to add task");
-    }
+    const newItem = { id: Date.now(), text: newTask, done: false };
+    saveTasks([...tasks, newItem]);
+    setNewTask("");
+    setErrorMessage("");
   };
 
-  const handleDelete = async (id: number) => {
-    try {
-      await axios.delete(`${API}/${id}`);
-      await fetchTasks();
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to delete task");
-    }
+  const handleDelete = (id) => {
+    saveTasks(tasks.filter((t) => t.id !== id));
   };
 
-  const handleUpdate = async (id: number) => {
+  const handleUpdate = (id) => {
     if (!editingText.trim()) return setErrorMessage("Task text is required");
 
-    try {
-      await axios.put(`${API}/${id}`, { text: editingText });
-      setEditingId(null);
-      setEditingText("");
-      await fetchTasks();
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to update task");
-    }
+    const updatedTasks = tasks.map((t) => (t.id === id ? { ...t, text: editingText } : t));
+    saveTasks(updatedTasks);
+    setEditingId(null);
+    setEditingText("");
+    setErrorMessage("");
   };
 
-  const handleToggleComplete = async (task: Task) => {
-    try {
-      await axios.put(`${API}/${task.id}`, { done: !task.done });
-      await fetchTasks();
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to update task status");
-    }
+  const handleToggleComplete = (id) => {
+    const updatedTasks = tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
+    saveTasks(updatedTasks);
   };
 
   return (
@@ -96,11 +72,18 @@ export default function Home() {
 
       <ul className="space-y-2">
         {tasks.map((task) => (
-          <li key={task.id} className="flex items-center justify-between p-3">
+          <li key={task.id} className="flex items-center justify-between p-3 border rounded">
             <div className="flex items-center gap-2">
-              <input type="checkbox" checked={task.done} onChange={() => handleToggleComplete(task)} className="w-5 h-5 accent-blue-500" />
+              <input type="checkbox" checked={task.done} onChange={() => handleToggleComplete(task.id)} className="w-5 h-5 accent-blue-500" />
               {editingId === task.id ? (
-                <input className="border p-1 rounded flex-1 focus:outline-none focus:ring focus:ring-green-300" value={editingText} onChange={(e) => setEditingText(e.target.value)} />
+                <input
+                  className="border p-1 rounded flex-1 focus:outline-none focus:ring focus:ring-green-300"
+                  value={editingText}
+                  onChange={(e) => setEditingText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleUpdate(task.id);
+                  }}
+                />
               ) : (
                 <span className={`flex-1 ${task.done ? "line-through text-gray-400" : ""}`}>{task.text}</span>
               )}
