@@ -1,11 +1,12 @@
 export interface Task {
-    id: number;
-    text: string;
-    done: boolean;
-  }
+  id: number;
+  text: string;
+  done: boolean;
+}
   
-  export interface ApiResponse<T = any> {
-    status: "success" | "error";
-    message: string;
-    data?: T;
-  }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface ApiResponse<T = any> {
+  status: "success" | "error";
+  message: string;
+  data?: T;
+}
